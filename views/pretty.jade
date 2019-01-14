@@ -1,0 +1,40 @@
+extends layout
+
+block content_layout
+	div(id="bg")
+			img(src="/images/background_dash.png" alt="")
+	nav(class="navbar navbar-default navbar-static-top")
+		div(class="container-fluid")
+			div(class="navbar-header")
+				a(class="navbar-brand" href="/")
+					img(alt="Brand" src="/images/dtcomixicon.png" style="border-radius:50%;height:120%")
+				button(type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false")
+					span(class="sr-only") Toggle Navigation
+					span(class="icon-bar")
+					span(class="icon-bar")
+					span(class="icon-bar")
+				a(class="navbar-brand" href="/") DTcomics
+			div(class="collapse navbar-collapse" id="bs-example-navbar-collapse-1")
+				ul(class="nav navbar-nav navbar-right text-center")
+					form(class="navbar-form" role="search")
+						div(class="input-group")
+							input(type="text" class="form-control" placeholder="search . . ." onkeypress="searchKeypress(event);" onfocus="searchFocusClear();")#search
+							span(class="input-group-btn")
+								a(href="javascript:searchSubmit();")
+									p(class="btn glyphicon glyphicon-search" aria-hidden="true" style="margin-top:0px")
+				ul(class="nav navbar-nav navbar-left")
+					li
+						a(href="/accounts/"+ "{{username}}" +"/create" ng-show="isartist") + Create Comic
+							span(class="sr-only")
+				//- form(class="navbar-form text-center" role="search")
+						div(class="form-group")
+							input(type="text" class="form-control" placeholder="search . . ." onkeypress="searchKeypress(event);" onfocus="searchFocusClear();")#search
+							a(href="javascript:searchSubmit();")
+								p(class="glyphicon glyphicon-search" aria-hidden="true")
+				ul(class="nav navbar-nav navbar-right")
+					li
+						a(href="/profile/" + "{{username}}") {{username}}
+					li
+						a(href="" ng-click="logout()") SignOut
+	div(class="container bs-docs-container" id="contentbottom")
+		block content

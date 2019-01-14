@@ -1,0 +1,62 @@
+extends pretty
+- var comics_js = JSON.stringify(comics)
+
+block content
+
+	div(class="container")
+		p(class="form-subtitle posrel") Dashboard
+		div(class="smallcenter opaquewhite")
+			form(ng-init="comics=#{comics_js}")
+			form(method='post' enctype='multipart/form-data' action= '/editdashboard' style = "text-align:center;")
+				p(class="dashboard_a")	-Avatar- 
+				input(type="file" name="image" id='image_upload' style="")
+				p
+				p(class="dashboard_b") -Description- 
+				p(class="dashboard_c") current: #{description}
+				p
+				if (!description)
+					input(class="form-control" type="text" name="description" placeholder="Enter Description..")
+				else
+					input(class="form-control" type="text" name="description" placeholder="Enter Description.." value="#{description}")
+				p
+				p(class="dashboard_a") -Name- 
+				p(class="dashboard_c") current: #{name}
+				p
+				if (!name)
+					input(class="form-control" type="text" name="name" placeholder= "Enter Name...")
+				else
+					input(class="form-control" type="text" name="name" placeholder= "Enter Name..." value="#{name}")
+				p
+				p(class="dashboard_b") -Email- 
+				p(class="dashboard_c") current: #{email}
+				p
+				if (!email)
+					input(class="form-control" type="email" name="email" placeholder="Change Email...")
+				else
+					input(class="form-control" type="email" name="email" placeholder="Change Email..." value="#{email}")
+				p
+				p(class="dashboard_a") -Location- 
+				p(class="dashboard_c") current: #{location}
+				p
+				if (!location)
+					input(class="form-control" type="text" name="location" placeholder="Enter Location...")
+				else
+					input(class="form-control" type="text" name="location" placeholder="Enter Location..." value="#{location}")
+				p
+				p(class="dashboard_b") -Add Link to Other Sites- 
+				p(class="dashboard_c") current: #{link}
+				if (!link)
+					input(class="form-control" type="text" name="link" placeholder="Enter Link...")
+				else
+					input(class="form-control" type="text" name="link" placeholder="Enter Link..." value="#{link}")
+				p
+
+				if(isartist == false) 
+					p(class="dashboard_a") -Subscription List-
+					input(type="radio" name="shouldShowSubscription" value=true)
+					b Show
+					input(type="radio" name="shouldShowSubscription" value=false)
+					b Hide
+					
+				p
+				input(class="btn btn-primary" type='submit')

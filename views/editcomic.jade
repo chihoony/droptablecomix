@@ -1,0 +1,146 @@
+extends comic
+
+block content_comic
+	div
+		div(class="row")
+			p(class="titleleft") Edit: #{comic_name} 
+				span(class="titleleftsmall") Page #{pageid}
+	div(class="btn-group btn-group-justified" role="group" aria-label="...")
+		div(class="btn-group" role="group")
+			if (adminable)
+				a(class="btn btn-default" role="button" href="/accounts/"+comic_creator+"/comics/"+comic_uri+"/admin") Admin options
+		div(class="btn-group" role="group")
+			a(class="btn btn-default" role="button" href="/accounts/"+comic_creator+"/comics/"+comic_uri+"/pages/#{pageid}") View page
+		div(class="btn-group" role="group")
+			a(class="btn btn-default" role="button" href="" ng-hide="{{(draft.overlays.length<=0)}" ng-click="toggleOverlays();") Partially Hide Overlays
+		div(class="btn-group" role="group")
+			a(class="btn btn-default" role="button" href="" ng-click="postPage('#{comic_creator}','#{comic_uri}')") New Page
+	br
+	//- if (adminable)
+	//- 	p
+	//- 		a(href="/accounts/"+comic_creator+"/comics/"+comic_uri+"/admin") Admin options
+	//- p
+	//- 	a(href="/accounts/"+comic_creator+"/comics/"+comic_uri+"/pages/#{pageid}") View page
+	div(class="row")
+		div(class="col-md-4")
+			form(method='post', enctype='multipart/form-data', action= '/accounts/' + comic_creator + '/comics/' + comic_uri+"/panels" style="float:left")
+				input(type='file', name='image' id='image_upload')
+				<input type="hidden" name="page" value="#{pageid}">
+				input(class="btn btn-primary btn-xs" type='submit')
+				p <br />
+	//- div(class="row")
+		div(class="col-md-4")
+			form(method='post', enctype='multipart/form-data', action='/accounts/' + comic_creator + '/comics/' + comic_uri + "/cover" style="float:right")
+				input(type='file', name='cover' id='image_upload')
+				input(class="btn btn-primary" type='submit')
+				p <br />
+	//- p
+	//- 	a(href="" ng-hide="{{(draft.overlays.length<=0)}" ng-click="toggleOverlays();") {{getToggleOverlayText()}}
+	center
+		//= render comic using angular (slightly different from published view to allow live edits)
+		div(class="comicpage" id="comicpage" style="width:1000px;")
+			span(id="page-area" style="position:relative;")
+				//- panels
+				span(data-ng-repeat="i in utilrange(0,draft.panels.length)")
+					img(ng-src="/accounts/"+comic_creator+"/comics/"+comic_uri+"/panels/{{draft.panels[i]}}" ng-mouseover="mouseover(i)" ng-mouseleave="mouseleave(i,'panel',$event)" ng-mousemove="mousemove(i,'panel',$event)" id="panel{{i}}")
+				//- overlays
+				span(data-ng-repeat="i in utilrange(0,draft.overlays.length)" style="position: absolute;top:0;left:0;")
+					img(ng-src="/accounts/"+comic_creator+"/comics/"+comic_uri+"/panels/{{draft.overlays[i].panelID}}" style="{{'position:absolute;left:'+(getOverlayPos(i).x)+'px;top:' + (getOverlayPos(i).y) + 'px;opacity:'+getOverlayOpacity()+';'}}" ng-mouseover="mouseover_lay(i)" ng-mouseleave="mouseleave(i,'overlay',$event)" ng-mousemove="mousemove(i,'overlay',$event)" ng-click="toggleGrabOverlay($event)" id="overlay{{i}}" title="click to drag")
+					
+					
+	p(ng-show="response.length>0")
+		font(color="red") {{response}}
+	p(ng-show="draft.edited")
+		a(href="" ng-click="publishPage('#{comic_creator}','#{comic_uri}',#{pageid})") Publish page
+		|  | 
+		a(href="" ng-click="revertPage()") Revert page
+	//- p
+	//- 	a(href="" ng-click="postPage('#{comic_creator}','#{comic_uri}')") New Page
+	if pageid==maxpageid && pageid>1
+		p
+			a(class="btn btn-default" href="" ng-click="confirmdelete=true;" ng-hide="confirmdelete") Delete this page
+			a(class="btn btn-warning" href="" ng-click="deletePage('#{comic_creator}','#{comic_uri}',#{pageid})" ng-show="confirmdelete") Confirm!
+
+	//- dynamic elements --- mouseover for panel
+	div(style="position:fixed;left:0px;top:0px;")
+		svg(width=20000 height=30000 ng-show="mouseover_panel>-1" ng-mouseleave="mouseleave(-1,'',$event)" ng-mouseover="mouseleave(-1,'',$event)" ng-mousemove="mousemove(-1,'',$event)")
+			rect(width="{{boxgetattr().width}}" height="{{boxgetattr().height}}" style="stroke-width:3;stroke:black;fill:blue;fill-opacity:0.1;" x="{{boxgetattr().left}}" y="{{boxgetattr().top}}")
+	div(style="position:fixed;left:{{boxgetattr().left}}px;top:{{boxgetattr().top}}px;" ng-show="mouseover_panel>-1")
+		img(src="/images/icon_back.png" ng-click="movepanel(mouseover_panel,mouseover_panel-1);" title="move panel back")
+		| &nbsp
+		img(src="/images/icon_forward.png" ng-click="movepanel(mouseover_panel,mouseover_panel+1);" title="bring panel ahead")
+		| &nbsp
+		img(src="/images/icon_delete.png" ng-click="deletepanel(mouseover_panel);" title="delete panel")
+		| &nbsp
+		img(src="/images/icon_pop.png" ng-click="poppanel(mouseover_panel);" title="pop out (make overlay)")
+
+	//- dynamic elements --- mouseover for overlay
+	div(style="position:fixed;left:0px;top:0px;")
+		svg(width=20000 height=30000 ng-show="mouseover_overlay>-1" ng-mouseleave="mouseleave(-1,'',$event)" ng-mouseover="mouseleave(-1,'',$event)" ng-mousemove="mousemove(-1,'',$event)" ng-click="toggleGrabOverlay($event)" title="click to drag")
+			rect(width="{{boxgetattr().width}}" height="{{boxgetattr().height}}" style="{{getOverlayColourStyle()}}" x="{{boxgetattr().left}}" y="{{boxgetattr().top}}" title="click to drag")
+				title click to drag
+	div(style="position:fixed;left:{{boxgetattr().left}}px;top:{{boxgetattr().top}}px;" ng-show="mouseover_overlay>-1")
+		img(src="/images/icon_delete.png" ng-click="deleteoverlay(mouseover_overlay);" title="delete overlay")
+		| &nbsp
+		img(src="/images/icon_pop.png" ng-click="overlaytop(mouseover_overlay);" title="bring to front")
+		| &nbsp
+		img(src="/images/icon_push.png" ng-click="overlaybot(mouseover_overlay);" title="push to back")
+	
+	p 
+		i By-Requesters:
+			each user, i in requestlist
+				span  #{user},
+	br
+
+block content_comment
+	div(class="commentcontainer")
+		div(class="col-md-8 col-md-offset-2")
+			h2 Comment on the page
+			hr
+			div(class="containeropaque")
+				div(class="row" style="margin:5%")
+					div(class="pull-left")
+						img(alt="#{username}" src="/accounts/#{username}/avatar" class="twPc-avatarImg center-block")
+					div(class="pull-right" style="width:calc(100% - 80px)")
+						p
+							textarea(class="noresize form-control" id="commenttextarea" type="text" ng-model="comment_input" placeholder="Enter comment here... (Maximum 150 characters)" ng-maxlength="150")
+							div(class="text-right")
+								button(class="btn btn-default" ng-click = "submit_editcomment('#{comic_creator}', '#{comic_uri}', '#{pageid}')" ng-show='comment_input.length>0') Submit 
+						p
+							font(color="red") {{response3}}
+			hr
+			div(class="containeropaque" style="max-height:1500px;overflow:auto;overflow-x:hidden")
+				each comment, i in editcomments
+					div(class="row" style="margin:5%")
+						div(class="pull-left")
+							div
+								img(alt="#{comment.username}" src="/accounts/#{comment.username}/avatar" class="twPc-avatarImg center-block")
+						div(class="pull-right" style="width:calc(100% - 80px)")
+							div(style="padding-top:3%")
+								if comment.adminlevel == 2
+									header
+										span
+											a(class="purplelevel" href="/profile/#{comment.username}") #{comment.username}   
+										span
+											span(class="nicegrey") &nbsp;&nbsp;-&nbsp;&nbsp;    
+											span(class="timestamp") #{comment.postDate}
+									p
+										|#{comment.description}  <br />
+								else if comment.adminlevel == 1
+									header
+										span
+											a(class="bluelevel" href="/profile/#{comment.username}") #{comment.username}   
+										span
+											span(class="nicegrey") &nbsp;&nbsp;-&nbsp;&nbsp;    
+											span(class="timestamp") #{comment.postDate}
+									p
+										|#{comment.description}  <br />	
+								else
+									header
+										span
+											a(class="pleblevel" href="/profile/#{comment.username}") #{comment.username}   
+										span
+											span(class="nicegrey") &nbsp;&nbsp;-&nbsp;&nbsp;    
+											span(class="timestamp") #{comment.postDate}
+									p
+										|#{comment.description}  <br />

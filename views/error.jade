@@ -1,0 +1,6 @@
+extends layout
+
+block content_layout
+  h3= message
+  h3= error.status
+  pre #{error.stack}
